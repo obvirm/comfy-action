@@ -141,9 +141,15 @@ runs:
       shell: bash -el {0}
       run: |
         source .venv/bin/activate
-        python main.py ${{ inputs.comfyui_flags }} > application.log 2>&1 &
+        PYTHON=$(which python)
+        cd $GITHUB_WORKSPACE
+        $PYTHON main.py ${{ inputs.comfyui_flags }} > comfyui.log 2>&1 &
         echo $! > .comfyui.pid
-        sleep 5
+        echo "ComfyUI PID: $(cat .comfyui.pid)"
+        sleep 10
+        echo "=== ComfyUI Output ==="
+        cat comfyui.log
+        echo "=== End ComfyUI Output ==="
 
     - name: '[Unix] Check if the server is running'
       if: ${{ inputs.os != 'windows' }}
@@ -151,7 +157,15 @@ runs:
       run: |
         source .venv/bin/activate
         cd ${{ github.action_path }}
-        python poll_server_start.py >> application.log 2>&1 || (echo "Server failed to start" && cat application.log && exit 1)
+        python poll_server_start.py > poll.log 2>&1
+        POLL_EXIT=$?
+        echo "=== Poll Output ==="
+        cat poll.log
+        echo "=== ComfyUI Log ==="
+        cat $GITHUB_WORKSPACE/comfyui.log 2>/dev/null || echo "No comfyui.log found"
+        echo "=== Process check ==="
+        ps aux | grep main.py | grep -v grep || echo "No main.py process found"
+        exit $POLL_EXIT
 
     - name: '[Unix] Run Python Action'
       id: unix_action
