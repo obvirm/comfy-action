@@ -59,41 +59,46 @@ runs:
       if: ${{ inputs.os != 'windows' }}
       uses: astral-sh/setup-uv@v4
 
-    - name: '[Unix] Setup Python'
+    - name: '[Unix] Create venv'
       if: ${{ inputs.os != 'windows' }}
       shell: bash -el {0}
       run: |
-        uv python install ${{ inputs.python_version }}
-        uv python pin ${{ inputs.python_version }}
+        uv venv .venv --python ${{ inputs.python_version }}
+        echo ".venv" >> .gitignore
 
     - name: '[Unix] Install Pytorch stable'
       if: ${{ inputs.os == 'linux' && inputs.torch_version == 'stable' }}
       shell: bash -el {0}
       run: |
-        uv pip install torch torchvision torchaudio --system --index-url https://download.pytorch.org/whl/cu121
+        source .venv/bin/activate
+        uv pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
 
     - name: '[Unix] Install Pytorch nightly'
       if: ${{ inputs.os == 'linux' && inputs.torch_version == 'nightly' }}
       shell: bash -el {0}
       run: |
-        uv pip install --pre torch torchvision torchaudio --system --index-url https://download.pytorch.org/whl/nightly/cu121
+        source .venv/bin/activate
+        uv pip install --pre torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/cu121
 
     - name: '[Unix] Install Pytorch stable (macOS)'
       if: ${{ inputs.os == 'macos' && inputs.torch_version == 'stable' }}
       shell: bash -el {0}
       run: |
-        uv pip install torch torchvision torchaudio --system
+        source .venv/bin/activate
+        uv pip install torch torchvision torchaudio
 
     - name: '[Unix] Install Pytorch nightly (macOS)'
       if: ${{ inputs.os == 'macos' && inputs.torch_version == 'nightly' }}
       shell: bash -el {0}
       run: |
-        uv pip install --pre torch torchvision torchaudio --system --index-url https://download.pytorch.org/whl/nightly
+        source .venv/bin/activate
+        uv pip install --pre torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly
 
     - name: '[Unix] Install Pytorch specific version'
       if: ${{ inputs.os != 'windows' && inputs.torch_version == 'specific' }}
       shell: bash -el {0}
       run: |
+        source .venv/bin/activate
         echo "Run specific torch install command"
         ${{ inputs.specific_torch_install }}
 
@@ -101,13 +106,15 @@ runs:
       if: ${{ inputs.os != 'windows' }}
       shell: bash -el {0}
       run: |
-        uv pip install -r requirements.txt --system
-        uv pip install -U comfy-cli --system
+        source .venv/bin/activate
+        uv pip install -r requirements.txt
+        uv pip install -U comfy-cli
 
     - name: '[Unix] Check environment'
       if: ${{ inputs.os != 'windows' }}
       shell: bash -el {0}
       run: |
+        source .venv/bin/activate
         which python
         echo "#### Python Version ####"
         python --version
@@ -120,8 +127,9 @@ runs:
       if: ${{ inputs.os != 'windows' }}
       shell: bash -el {0}
       run: |
+        source .venv/bin/activate
         cd ${{ github.action_path }}
-        uv pip install -r requirements.txt --system
+        uv pip install -r requirements.txt
         echo "will run default-models prep"
         python default-models-prep.py --cache-directory ~/.cache/comfy-actions-runner/modelcache --live-directory "$GITHUB_WORKSPACE/models"
         echo "default-models-prep done, will copy workflow images"
@@ -132,18 +140,21 @@ runs:
       if: ${{ inputs.os != 'windows' && inputs.skip_quickci != 'true' }}
       shell: bash -el {0}
       run: |
+        source .venv/bin/activate
         python main.py --quick-test-for-ci
 
     - name: '[Unix] Run ComfyUI'
       if: ${{ inputs.os != 'windows' }}
       shell: bash -el {0}
       run: |
+        source .venv/bin/activate
         python main.py ${{ inputs.comfyui_flags }} > application.log 2>&1 &
 
     - name: '[Unix] Check if the server is running'
       if: ${{ inputs.os != 'windows' }}
       shell: bash -el {0}
       run: |
+        source .venv/bin/activate
         cd ${{ github.action_path }}
         python poll_server_start.py > application.log 2>&1
 
@@ -216,29 +227,32 @@ runs:
       if: ${{ inputs.os == 'windows' }}
       uses: astral-sh/setup-uv@v4
 
-    - name: '[Win] Setup Python'
+    - name: '[Win] Create venv'
       if: ${{ inputs.os == 'windows' }}
       shell: powershell
       run: |
-        uv python install ${{ inputs.python_version }}
-        uv python pin ${{ inputs.python_version }}
+        uv venv .venv --python ${{ inputs.python_version }}
+        ".venv" | Out-File -Append .gitignore
 
     - name: '[Win] Install Pytorch stable'
       if: ${{ inputs.os == 'windows' && inputs.torch_version == 'stable' }}
       shell: powershell
       run: |
-        uv pip install torch torchvision torchaudio --system --index-url https://download.pytorch.org/whl/cu121
+        .\.venv\Scripts\Activate.ps1
+        uv pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
 
     - name: '[Win] Install Pytorch nightly'
       if: ${{ inputs.os == 'windows' && inputs.torch_version == 'nightly' }}
       shell: powershell
       run: |
-        uv pip install --pre torch torchvision torchaudio --system --index-url https://download.pytorch.org/whl/nightly/cu121
+        .\.venv\Scripts\Activate.ps1
+        uv pip install --pre torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/cu121
 
     - name: '[Win] Install Pytorch specific version'
       if: ${{ inputs.os == 'windows' && inputs.torch_version == 'specific' }}
       shell: powershell
       run: |
+        .\.venv\Scripts\Activate.ps1
         Write-Output "Run specific torch install command"
         ${{ inputs.specific_torch_install }}
 
@@ -246,13 +260,15 @@ runs:
       if: ${{ inputs.os == 'windows' }}
       shell: powershell
       run: |
-        uv pip install -r requirements.txt --system
-        uv pip install -U comfy-cli --system
+        .\.venv\Scripts\Activate.ps1
+        uv pip install -r requirements.txt
+        uv pip install -U comfy-cli
 
     - name: '[Win] Check environment'
       if: ${{ inputs.os == 'windows' }}
       shell: powershell
       run: |
+        .\.venv\Scripts\Activate.ps1
         Get-Command python
         Write-Output "#### Python Version ####"
         python --version
@@ -265,8 +281,9 @@ runs:
       if: ${{ inputs.os == 'windows' }}
       shell: powershell
       run: |
+        .\.venv\Scripts\Activate.ps1
         cd $Env:GITHUB_ACTION_PATH
-        uv pip install -r requirements.txt --system
+        uv pip install -r requirements.txt
         python default-models-prep.py --cache-directory C:\actions-runner\modelcache --live-directory "$Env:GITHUB_WORKSPACE/models"
         Copy-Item -Path "$Env:GITHUB_ACTION_PATH\workflow-images\*" -Destination "$Env:GITHUB_WORKSPACE\input" -Recurse -ErrorAction SilentlyContinue
 
@@ -274,6 +291,7 @@ runs:
       if: ${{ inputs.os == 'windows' && inputs.skip_quickci != 'true' }}
       shell: powershell
       run: |
+        .\.venv\Scripts\Activate.ps1
         python $Env:GITHUB_WORKSPACE/main.py --quick-test-for-ci
 
     - name: '[Win] Run ComfyUI'
@@ -287,6 +305,7 @@ runs:
       if: ${{ inputs.os == 'windows' }}
       shell: powershell
       run: |
+        .\.venv\Scripts\Activate.ps1
         cd $Env:GITHUB_ACTION_PATH
         python poll_server_start.py
 
