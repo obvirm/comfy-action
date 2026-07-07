@@ -127,14 +127,7 @@ runs:
       if: ${{ inputs.os != 'windows' }}
       shell: bash -el {0}
       run: |
-        source .venv/bin/activate
-        cd ${{ github.action_path }}
-        uv pip install -r requirements.txt
-        echo "will run default-models prep"
-        python default-models-prep.py --cache-directory ~/.cache/comfy-actions-runner/modelcache --live-directory "$GITHUB_WORKSPACE/models"
-        echo "default-models-prep done, will copy workflow images"
-        cp -r "${{ github.action_path }}"/workflow-images/* "$GITHUB_WORKSPACE/input" 2>/dev/null || true
-        echo "workflow images copied"
+        echo "Skipping default models - not needed for custom nodes"
 
     - name: '[Unix] Run ComfyUI quick test'
       if: ${{ inputs.os != 'windows' && inputs.skip_quickci != 'true' }}
@@ -281,11 +274,7 @@ runs:
       if: ${{ inputs.os == 'windows' }}
       shell: powershell
       run: |
-        .\.venv\Scripts\Activate.ps1
-        cd $Env:GITHUB_ACTION_PATH
-        uv pip install -r requirements.txt
-        python default-models-prep.py --cache-directory C:\actions-runner\modelcache --live-directory "$Env:GITHUB_WORKSPACE/models"
-        Copy-Item -Path "$Env:GITHUB_ACTION_PATH\workflow-images\*" -Destination "$Env:GITHUB_WORKSPACE\input" -Recurse -ErrorAction SilentlyContinue
+        Write-Output "Skipping default models - not needed for custom nodes"
 
     - name: '[Win] Run ComfyUI quick test'
       if: ${{ inputs.os == 'windows' && inputs.skip_quickci != 'true' }}
