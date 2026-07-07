@@ -95,9 +95,10 @@ runs:
     ############################################################
     - name: '[Unix] Auth to GCS'
       uses: "google-github-actions/auth@v2"
-      if: ${{ inputs.os != 'windows' }}
+      if: ${{ inputs.os != 'windows' && inputs.google_credentials != '' }}
       with:
         credentials_json: "${{ inputs.google_credentials }}"
+        if: ${{ inputs.google_credentials != '' }}
 
     # - name: '[Unix] Setup Conda'
     #   uses: conda-incubator/setup-miniconda@v3.0.3
@@ -308,9 +309,10 @@ runs:
 
     - name: '[Win] Auth to GCS'
       uses: "google-github-actions/auth@v2"
-      if: ${{ inputs.os == 'windows' }}
+      if: ${{ inputs.os == 'windows' && inputs.google_credentials != '' }}
       with:
         credentials_json: "${{ inputs.google_credentials }}"
+        if: ${{ inputs.google_credentials != '' }}
 
     - name: '[Win] Setup Conda'
       uses: conda-incubator/setup-miniconda@v3.0.3
